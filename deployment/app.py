@@ -1,13 +1,12 @@
 import streamlit as st
 import numpy as np
-import cv2
 from tensorflow.keras.models import load_model
 from PIL import Image
 
 # Load the trained model
 model = load_model("fruit_disease_model.h5")
 
-# Class names (same as your train folders)
+# Class names
 class_names = [
     'apple_healthy',
     'apple_black_rot',
@@ -20,6 +19,8 @@ class_names = [
     'mango_stem_rot'
 ]
 
+st.set_page_config(page_title="Fruit Disease Detection", page_icon="🍎")
+
 st.title("🍎 Fruit Disease Detection 🍌")
 
 uploaded_file = st.file_uploader("Upload a fruit image", type=["jpg", "jpeg", "png"])
@@ -28,14 +29,15 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    # Preprocess image
-    img = np.array(image)
-    img = cv2.resize(img, (224, 224))  # same as training
-    img = img / 255.0
-    img = np.expand_dims(img, axis=0)
+    # Preprocess image using PIL
+    img = image.resize((224, 224))             # resize
+    img = np.array(img) / 255.0                # normalize
+    img = np.expand_dims(img, axis=0)          # add batch dimension
 
     # Predict
     prediction = model.predict(img)
     predicted_class = np.argmax(prediction)
+    confidence = np.max(prediction)
 
     st.success(f"Prediction: {class_names[predicted_class]}")
+    st.info(f"Confidence: {confidence*100:.2f}%")
